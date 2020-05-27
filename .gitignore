@@ -1,5 +1,6 @@
 __pycache__/
 data/
 save_temp/
+figures*/
 
 log_*

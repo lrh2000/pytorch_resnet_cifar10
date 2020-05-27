@@ -12,6 +12,7 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import resnet
+import numpy as np
 
 model_names = sorted(name for name in resnet.__dict__
     if name.islower() and not name.startswith("__")
@@ -55,8 +56,29 @@ parser.add_argument('--save-dir', dest='save_dir',
 parser.add_argument('--save-every', dest='save_every',
                     help='Saves checkpoints at every specified number of epochs',
                     type=int, default=10)
+parser.add_argument('--cifar5', dest='cifar5',
+                    help='1 for first 5 classes, 2 for last 5 classes, otherwise for all 10 classes',
+                    type=int, default=0)
 best_prec1 = 0
 
+class CIFAR10WithFilter(datasets.CIFAR10):
+    def __init__(self, *args, filter_fn=None, map_fn=None, **kwargs):
+        super(CIFAR10WithFilter, self).__init__(*args, **kwargs)
+        if filter_fn is None and map_fn is None:
+            return
+        if filter_fn is None:
+            filter_fn = lambda x: True
+        if map_fn is None:
+            map_fn = lambda x: x
+
+        indices = []
+        targets = []
+        for i in range(len(self.targets)):
+            if filter_fn(self.targets[i]):
+                indices.append(i)
+                targets.append(map_fn(self.targets[i]))
+        self.data = self.data[indices]
+        self.targets = targets
 
 def main():
     global args, best_prec1
@@ -67,7 +89,20 @@ def main():
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    model = torch.nn.DataParallel(resnet.__dict__[args.arch]())
+    if args.cifar5 == 1:
+        filter_fn = lambda x: x <= 4
+        map_fn = None
+        num_classes = 5
+    elif args.cifar5 == 2:
+        filter_fn = lambda x: x >= 5
+        map_fn = lambda x: x - 5
+        num_classes = 5
+    else:
+        filter_fn = None
+        map_fn = None
+        num_classes = 10
+
+    model = torch.nn.DataParallel(resnet.__dict__[args.arch](num_classes=num_classes))
     #model.cuda()
 
     # optionally resume from a checkpoint
@@ -90,20 +125,22 @@ def main():
                                      std=[0.229, 0.224, 0.225])
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(root='./data', train=True, transform=transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(32, 4),
-            transforms.ToTensor(),
-            normalize,
-        ]), download=True),
+        CIFAR10WithFilter(filter_fn=filter_fn, map_fn=map_fn, root='./data', train=True,
+            transform=transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(32, 4),
+                transforms.ToTensor(),
+                normalize,
+            ]), download=True),
         batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(root='./data', train=False, transform=transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ])),
+        CIFAR10WithFilter(filter_fn=filter_fn, map_fn=map_fn, root='./data', train=False,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                normalize,
+            ])),
         batch_size=128, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
@@ -152,11 +189,13 @@ def main():
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'best_prec1': best_prec1,
+                'num_classes': num_classes,
             }, is_best, filename=os.path.join(args.save_dir, 'checkpoint.th'))
 
         save_checkpoint({
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
+            'num_classes': num_classes,
         }, is_best, filename=os.path.join(args.save_dir, 'model.th'))
 
 

@@ -5,8 +5,10 @@ from __future__ import print_function
 import torch
 from torchvision import datasets, transforms
 
-pretrained_model = "save_resnet20/model.th"
-pretrained_model2 = "pretrained_models/resnet20-12fca82f.th"
+pretrained_model = "save_cifar5-1_resnet20/model.th"
+pretrained_model2 = "save_cifar5-2_resnet20/model.th"
+#pretrained_model = "save_resnet20/model.th"
+#pretrained_model2 = "pretrained_models/resnet20-12fca82f.th"
 use_cuda = True
 examples_limit = 10000
 
@@ -26,13 +28,16 @@ test_loader = torch.utils.data.DataLoader(
 print("CUDA Available: ",torch.cuda.is_available())
 device = torch.device("cuda" if (use_cuda and torch.cuda.is_available()) else "cpu")
 
+model_data = torch.load(pretrained_model, map_location='cpu')
+model2_data = torch.load(pretrained_model2, map_location='cpu')
+
 # Initialize the network
-model = torch.nn.DataParallel(Net()).to(device)
-model2 = torch.nn.DataParallel(Net()).to(device)
+model = torch.nn.DataParallel(Net(num_classes=model_data.get('num_classes', 10))).to(device)
+model2 = torch.nn.DataParallel(Net(num_classes=model2_data.get('num_classes', 10))).to(device)
 
 # Load the pretrained model
-model.load_state_dict(torch.load(pretrained_model, map_location='cpu')['state_dict'])
-model2.load_state_dict(torch.load(pretrained_model2, map_location='cpu')['state_dict'])
+model.load_state_dict(model_data['state_dict'])
+model2.load_state_dict(model2_data['state_dict'])
 
 # Set the model in evaluation mode. In this case this is for the Dropout layers
 model.eval()
