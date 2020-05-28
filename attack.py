@@ -46,7 +46,7 @@ model.eval()
 model2.eval()
 
 # FGSM attack code
-def fgsm_attack(image, epsilon, data_grad,data_grad2,set_zero = False):
+def fgsm_attack(image, epsilon, data_grad, data_grad2, set_zero = False):
     data_grad=data_grad.numpy()
     data_grad2=data_grad2.numpy()
     if set_zero:
@@ -55,9 +55,9 @@ def fgsm_attack(image, epsilon, data_grad,data_grad2,set_zero = False):
             for j in range(b):
                 for k in range(c):
                     for t in range(d):
-                        if data_grad[i][j][k][t] < 0.001 or data_grad2[i][j][k][t]<0.001:
+                        if data_grad[i][j][k][t] < 0.001 or data_grad2[i][j][k][t] < 0.001:
                             data_grad[i][j][k][t] = 0
-    
+
     # Collect the element-wise sign of the data gradient
     sign_data_grad = torch.from_numpy(data_grad).cuda().sign()
     # Create the perturbed image by adjusting each pixel of the input image
@@ -71,7 +71,7 @@ def test(model, model2, device, test_loader, epsilon, set_zero=False):
     # Accuracy counter
     correct = correct2 = 0
     #adv_examples = []
-    
+
     # Loop over all examples in test set
     for data, target in test_loader:
         # Send the data and label to the device
@@ -124,19 +124,27 @@ def test(model, model2, device, test_loader, epsilon, set_zero=False):
             correct += 1
         if final_pred2.item() == target.item():
             correct2 += 1
-            
+            # Special case for saving 0 epsilon examples
+            #if (epsilon == 0) and (len(adv_examples) < 5):
+            #    adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            #    adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+        #else:
+            # Save some adv examples for visualization later
+            #if len(adv_examples) < 5:
+            #    adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            #    adv_examples.append( (init_pred.item(), final_pred.item(), adv_ex) )
+
     # Calculate final accuracy for this epsilon
     final_acc = correct/float(len(test_loader))
     final_acc2 = correct2/float(len(test_loader))
     print("Epsilon: {}\tTest Accuracy = {} / {} = {} v.s. {} / {} = {}".format(epsilon,
         correct, len(test_loader), final_acc, correct2, len(test_loader), final_acc2))
-    
+
     # Return the accuracy and an adversarial example
     #return final_acc, adv_examples
 
 #accuracies.append(acc)
 #examples.append(ex)
-
 
 # Run test for each epsilon
 for eps in epsilons:
@@ -153,6 +161,7 @@ plt.title("Accuracy vs Epsilon")
 plt.xlabel("Epsilon")
 plt.ylabel("Accuracy")
 plt.show()
+
 # Plot several examples of adversarial samples at each epsilon
 cnt = 0
 plt.figure(figsize=(8,10))
