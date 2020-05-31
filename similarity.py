@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = ['\\usepackage{amsmath}']
 
-# change with your file path
+# change to your file from dump
 data_filename = "/tmp/model_tests.10000.pt" 
 
 # https://arxiv.org/abs/1810.11750
