@@ -60,6 +60,7 @@ parser.add_argument('--cifar5', dest='cifar5',
                     help='1 for first 5 classes, 2 for last 5 classes, otherwise for all 10 classes',
                     type=int, default=0)
 best_prec1 = 0
+train_false = False     # turn it to True if training a false model
 
 class CIFAR10WithFilter(datasets.CIFAR10):
     def __init__(self, *args, filter_fn=None, map_fn=None, **kwargs):
@@ -83,7 +84,9 @@ class CIFAR10WithFilter(datasets.CIFAR10):
 def main():
     global args, best_prec1
     args = parser.parse_args()
-
+    
+    # add this if training from the wrong init
+    # args.start_epoch = 0
 
     # Check the save_dir exists or not
     if not os.path.exists(args.save_dir):
@@ -217,6 +220,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # measure data loading time
         data_time.update(time.time() - end)
 
+        if train_false:
+            target = torch.tensor(9) - target
+        
         #target = target.cuda()
         #input_var = input.cuda()
         input_var = input
@@ -268,6 +274,10 @@ def validate(val_loader, model, criterion):
     end = time.time()
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
+            
+            if train_false:
+                target = torch.tensor(9) - target
+            
             #target = target.cuda()
             #input_var = input.cuda()
             #target_var = target.cuda()
