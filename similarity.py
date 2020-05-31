@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = ['\\usepackage{amsmath}']
 
-data_filename = "/tmp/model_tests.10000.pt"
+# change with your file path
+data_filename = "/tmp/model_tests.10000.pt" 
 
 # https://arxiv.org/abs/1810.11750
 # Maximum Matching Similarity
@@ -176,12 +177,34 @@ def main():
         print(f"Similarity: {sim}")
     print('')
 
+    num = 6      # linear 6 cnn 4 resnet 6
+    draw_x = np.arange(0, num+1)
+    draw_y1 = np.zeros(num)
+    draw_y2 = np.zeros(num)
+    i = 0
     for x, y in zip(X, Y):
         print(f"x.shape = {x.shape}, y.shape = {y.shape}")
         sim1 = calc_similarity1(x, y, 0.3)
         sim2 = calc_similarity2(x, y)
+        draw_y1[i] = sim1
+        draw_y2[i] = sim2
+        i += 1
         print(f"Similarity1: {sim1}\tSimilarity2: {sim2}")
+        draw_y1[i] = sim1
+        draw_y2[i] = sim2
+        i += 1
         print('')
+
+    # MMS
+    plt.xlabel("Layer Number")
+    plt.ylabel("Similarity")
+    plt.plot(draw_x, draw_y1)
+    plt.show()
+    # CKA
+    plt.xlabel("Layer Number")
+    plt.ylabel("Similarity")
+    plt.plot(draw_x, draw_y2)
+    plt.show()
 
 if __name__ == "__main__":
     main()
