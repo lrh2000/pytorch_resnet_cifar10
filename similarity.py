@@ -177,8 +177,8 @@ def main():
         print(f"Similarity: {sim}")
     print('')
 
-    num = 6      # linear 6 cnn 4 resnet 6
-    draw_x = np.arange(0, num+1)
+    num = 6      # linear 9 cnn 4 resnet 6
+    draw_x = np.arange(0, num)
     draw_y1 = np.zeros(num)
     draw_y2 = np.zeros(num)
     i = 0
