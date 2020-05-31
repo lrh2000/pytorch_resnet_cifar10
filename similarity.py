@@ -186,9 +186,6 @@ def main():
         print(f"x.shape = {x.shape}, y.shape = {y.shape}")
         sim1 = calc_similarity1(x, y, 0.3)
         sim2 = calc_similarity2(x, y)
-        draw_y1[i] = sim1
-        draw_y2[i] = sim2
-        i += 1
         print(f"Similarity1: {sim1}\tSimilarity2: {sim2}")
         draw_y1[i] = sim1
         draw_y2[i] = sim2
