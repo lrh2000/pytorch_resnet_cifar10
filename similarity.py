@@ -69,6 +69,23 @@ def calc_similarity2(x, y):
     z = (a / (b * c)).item()
     return z
 
+def local_perm_similarity(x, y):
+    sum1 = 0
+    sum2 = 0
+    x = sorted((x - min(x)) / (max(x) - min(x)))
+    y = sorted((y - min(y)) / (max(y) - min(y)))
+    lx = len(x)
+    ly = len(y)
+    if lx < ly:
+        for i in range(ly):
+            sum1 = sum1 + min(x[(i * lx) // ly], y[i])
+            sum2 = sum2 + max(x[(i * lx) // ly], y[i])
+    else:
+        for i in range(lx):
+            sum1 = sum1 + min(x[i], y[(i * ly) // lx])
+            sum2 = sum2 + max(x[i], y[(i * ly) // lx])
+    return sum1 / sum2
+
 def universal_perm_similarity(x, y, figure_dir=None, loss_data_limit=1000, plot_data_limit=3):
     if x.shape[1] > y.shape[1]:
         perm = torch.randperm(x.shape[1])
@@ -154,6 +171,10 @@ def main():
         plt.plot(sorted(list(x.numpy())))
         plt.plot(sorted(list(y.numpy())))
         plt.show()
+
+        sim = local_perm_similarity(x.numpy(), y.numpy())
+        print(f"Similarity: {sim}")
+    print('')
 
     for x, y in zip(X, Y):
         print(f"x.shape = {x.shape}, y.shape = {y.shape}")
